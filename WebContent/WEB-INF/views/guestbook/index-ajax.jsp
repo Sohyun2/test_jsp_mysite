@@ -7,17 +7,48 @@
 <head>
 <title>mysite</title>
 <meta http-equiv="content-type" content="text/html; charset=utf-8">
-<link rel="stylesheet"
-	href="${pageContext.request.contextPath }/assets/css/guestbook-ajax.css"
-	rel="stylesheet" type="text/css">
-<link rel="stylesheet"
-	href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-<script type="text/javascript"
-	src="${pageContext.request.contextPath }/assets/js/jquery/jquery-1.9.0.js"></script>
+<link rel="stylesheet" href="${pageContext.request.contextPath }/assets/css/guestbook-ajax.css" rel="stylesheet" type="text/css">
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<style type="text/css">
+	#dialog-delete-form p {
+		padding: 10px;
+		font-weight: bold;
+		font-size: 1.0em;
+	}
+	#dialog-delete-form input[type="password"] {
+		padding: 5px;
+		outline: none;
+		width: 180px;
+		border: 1px solid #888;
+	}
+</style>
+<script type="text/javascript" src="${pageContext.request.contextPath }/assets/js/jquery/jquery-1.9.0.js"></script>
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <script type="text/javascript">
+
+	// ---------custom jquery plug-in 만들어보기~
+	(function(a) {
+		$.fn.hello = function() {
+			console.log($(this).attr("id") + "-------> hello");
+		}
+	})(jQuery);
+
+	
 	var page = 0;
 	var isEnd = false;
+
+	var messageBox = function(title, message) {
+		$("#dialog-message").attr("title", title);
+		$("#dialog-message p").text(message);
+		$("#dialog-message").dialog({
+			modal: true, // true = doModalDialog / false = modalDialog
+			buttons: {
+				"확인": function() {
+					$(this).dialog("close");
+				}
+			}
+		});
+	}
 
 	var render = function(vo, mode) {
 		var htmls = "<li data-no='" + vo.no +"'>" + "<strong>" + vo.name
@@ -68,11 +99,41 @@
 		});
 	}
 
-	$(function() {
+	$(function() {		
+		var dialogDelete = $("#dialog-delete-form").dialog({
+			autoOpen: false,
+			modal: true,
+			buttons: {
+				"삭제": function(){
+					console.log("ajax 삭제작업");
+					$.ajax({
+						url: "/mysite2/api/guestbook?a=ajax-delete&no=" + no,
+						type: "get",
+						dataType: "json",
+						data: "",
+						success: function(response) {
+							
+						},
+						error: function(xhr, status, e) {
+							console.error(status + " : " + e);
+						}
+					});
+				},
+				"취소": function() {
+					dialogDelete.dialog("close");
+				}				
+			},
+			close: function(){
+				//close됐을 때 실행해야할 코드
+				console.log("close시 뒤처리..");
+			}
+		});
+		
 		// live event
 		$(document).on("click", "#list-guestbook li a", function() {
-			event.preventDefaulst();
-			console.log("clicked" + $(this).data)
+			event.preventDefault();
+			console.log("clicked" + $(this).data("no"));
+			dialogDelete.dialog("open");
 		});
 		//메시지 등록 폼 submit 이벤트
 		$("#add-form").submit(function(event) {
@@ -80,11 +141,17 @@
 			// 막아야한다.
 			event.preventDefault(); //기본동작을 막음
 
+			//validate form data
+			var name = $("#input-name").val();
+			if (name == "") {
+				messageBox("글남기기", "이름은 필수 항목입니다.");
+				return;
+			}
 		});
-		
+
 		$("#btn-next").click(function() {
 			fetchList();
-		});		
+		});
 
 		// 스크롤 이벤트
 		$(window).scroll(function() {
@@ -111,8 +178,8 @@
 			<div id="guestbook">
 				<h1>방명록</h1>
 				<form id="add-form" action="" method="post">
-					<input type="text" id="input-name" placeholder="이름"> <input
-						type="password" id="input-password" placeholder="비밀번호">
+					<input type="text" id="input-name" placeholder="이름"> 
+					<input type="password" id="input-password" placeholder="비밀번호">
 					<textarea id="tx-content" placeholder="내용을 입력해 주세요."></textarea>
 					<input type="submit" value="보내기" />
 				</form>
@@ -128,11 +195,9 @@
 				<p class="validateTips normal">작성시 입력했던 비밀번호를 입력하세요.</p>
 				<p class="validateTips error" style="display: none">비밀번호가 틀립니다.</p>
 				<form>
-					<input type="password" id="password-delete" value=""
-						class="text ui-widget-content ui-corner-all"> <input
-						type="hidden" id="hidden-no" value=""> <input
-						type="submit" tabindex="-1"
-						style="position: absolute; top: -1000px">
+					<input type="password" id="password-delete" value="" class="text ui-widget-content ui-corner-all"> 
+					<input type="hidden" id="hidden-no" value=""> 
+					<input type="submit" tabindex="-1" style="position: absolute; top: -1000px">
 				</form>
 			</div>
 			<div id="dialog-message" title="" style="display: none">
