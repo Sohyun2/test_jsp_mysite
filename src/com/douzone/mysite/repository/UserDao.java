@@ -9,6 +9,55 @@ import java.sql.SQLException;
 import com.douzone.mysite.vo.UserVo;
 
 public class UserDao {
+	public UserVo get(String email) {
+		UserVo result = null;
+		
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		
+		try {
+			conn = GetConnection.getConnection();
+
+			String sql = 
+				" select no, name" + 
+				"   from user" + 
+				"  where email=?";
+			pstmt = conn.prepareStatement(sql);
+
+			pstmt.setString(1, email);
+
+			rs = pstmt.executeQuery();
+			if(rs.next()) {				
+				result = new UserVo();
+				result.setNo(rs.getLong(1));
+				result.setEmail(rs.getString(2));
+			}
+		} catch (SQLException e) {
+			System.out.println("error :" + e);
+		} finally {
+			// 자원 정리
+			try {
+				if(rs != null) {
+					rs.close();
+				}
+				if(pstmt != null) {
+					pstmt.close();
+				}
+				if(conn != null) {
+					conn.close();
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+
+		return result;
+	}
+	public UserVo get(long no) {
+		return null;
+	}
+	
 	public UserVo get(String email, String password) {
 		UserVo result = null;
 		
