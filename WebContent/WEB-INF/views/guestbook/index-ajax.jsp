@@ -36,6 +36,7 @@
 	
 	var page = 0;
 	var isEnd = false;
+	var no = 0;
 
 	var messageBox = function(title, message) {
 		$("#dialog-message").attr("title", title);
@@ -106,18 +107,41 @@
 			buttons: {
 				"삭제": function(){
 					console.log("ajax 삭제작업");
+					
+					//var no = $("#list-guestbook li a").data("no");
+					var pw = $("#password-delete").val();
+					console.log(no);
+					console.log(pw);
+					
 					$.ajax({
-						url: "/mysite2/api/guestbook?a=ajax-delete&no=" + no,
-						type: "get",
+						url: "/mysite2/api/guestbook",
+						type: "post",
 						dataType: "json",
-						data: "",
+						data: "a=ajax-delete&no=" + no + "&pw=" + pw,
 						success: function(response) {
-							
-						},
+							if(response.result == 1) {
+								console.log("삭제 성공");
+								// dialog clear
+								$("#password-delete").val("");
+								dialogDelete.dialog("close");
+								$("#list-guestbook li[data-no="+ no +"]").remove();
+							} else {
+								console.log("삭제 실패");
+								
+								$(".validateTips-normal").css({
+									display: "none"
+								});
+								$(".validateTips-error").css({
+									display:""
+								});
+								// dialog clear
+								$("#password-delete").val("");
+							}
+						}, 
 						error: function(xhr, status, e) {
 							console.error(status + " : " + e);
-						}
-					});
+						}					
+					});						
 				},
 				"취소": function() {
 					dialogDelete.dialog("close");
@@ -129,12 +153,16 @@
 			}
 		});
 		
+		
 		// live event
 		$(document).on("click", "#list-guestbook li a", function() {
 			event.preventDefault();
-			console.log("clicked" + $(this).data("no"));
+			
+			no = $(this).data("no");
+			console.log("clicked" + no);
 			dialogDelete.dialog("open");
 		});
+		
 		//메시지 등록 폼 submit 이벤트
 		$("#add-form").submit(function(event) {
 			// submit의 기본동작(post)
@@ -147,6 +175,39 @@
 				messageBox("글남기기", "이름은 필수 항목입니다.");
 				return;
 			}
+			var password = $("#input-password").val();
+			if (password == "") {
+				messageBox("글남기기", "비밀번호는 필수 항목입니다.");
+				return;
+			}
+			var message = $("#tx-content").val();
+			if (message == "") {
+				messageBox("글남기기", "내용은 필수 항목입니다.");
+				return;
+			}
+			
+			console.log("name : " + name);
+			console.log("password : " + password);
+			console.log("message : " + message);
+			
+			$.ajax({
+				url: "/mysite2/api/guestbook",
+				type: "post",
+				dataType: "json",
+				data: "a=ajax-insert&name=" + name + "&password=" + password + "&message=" + message,
+				success: function(response) {
+					if (response.result == "fail") {
+						console.warn(response.data);
+						return;
+					}
+					fetchList();
+					//console.log(response.data);
+					//render(response.data, true);
+				},
+				error: function(xhr, status, e) {
+					//console.error(status + " : " + e);
+				}
+			});
 		});
 
 		$("#btn-next").click(function() {
@@ -192,11 +253,11 @@
 				<button id="btn-next">다음</button>
 			</div>
 			<div id="dialog-delete-form" title="메세지 삭제" style="display: none">
-				<p class="validateTips normal">작성시 입력했던 비밀번호를 입력하세요.</p>
-				<p class="validateTips error" style="display: none">비밀번호가 틀립니다.</p>
+				<p class="validateTips-normal">작성시 입력했던 비밀번호를 입력하세요.</p>
+				<p class="validateTips-error" style="display: none">비밀번호가 틀립니다.</p>
 				<form>
 					<input type="password" id="password-delete" value="" class="text ui-widget-content ui-corner-all"> 
-					<input type="hidden" id="hidden-no" value=""> 
+					<input type="hidden" id="hidden-no" value="" name="no"> 
 					<input type="submit" tabindex="-1" style="position: absolute; top: -1000px">
 				</form>
 			</div>

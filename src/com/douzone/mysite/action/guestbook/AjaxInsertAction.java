@@ -18,26 +18,31 @@ public class AjaxInsertAction implements Action {
 
 	@Override
 	public void execute(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-		String name = "";
-		String message = "";
-		String password = "";
-		
+		String name = request.getParameter("name");
+		String password = request.getParameter("password");
+		String message = request.getParameter("message");
+
 		GuestbookVo vo = new GuestbookVo();
 		vo.setName(name);
-		vo.setMessage(message);
 		vo.setPassword(password);
-		
+		vo.setMessage(message);
+
 		GuestbookDao dao = new GuestbookDao();
-		long no = dao.insert(vo);	
+		long no = dao.insert(vo);
 		GuestbookVo newVo = dao.get(no);
 		
-		
+		System.out.println(newVo.getNo());
+		System.out.println(newVo.getName());
+		System.out.println(newVo.getMessage());
+		System.out.println(newVo.getRegDate());
+
 		Map<String, Object> map = new HashMap<String, Object>();
 		map.put("result", "success");
 		map.put("data", newVo); // ajax에서 response로 받는 데이터 = list
-		
-		response.setContentType("application/json; charset=UTF-8"); // ajax함수에서 dataType이 json이라는 것을 알려줌 
+
+		response.setContentType("application/json; charset=UTF-8"); // ajax함수에서 dataType이 json이라는 것을 알려줌
 		JSONObject jsonObject = JSONObject.fromObject(map);
 		response.getWriter().print(jsonObject.toString());
+
 	}
 }

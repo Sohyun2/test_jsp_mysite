@@ -21,6 +21,8 @@ public class GuestActionFactory extends AbstractActionFactory {
 			action = new AjaxListAction();
 		} else if("ajax-delete".equals(actionName)) {
 			action = new AjaxDeleteAction();
+		} else if("ajax-insert".equals(actionName)) {
+			action = new AjaxInsertAction();
 		} else {
 			action = new ListAction();
 		}
